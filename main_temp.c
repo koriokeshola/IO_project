@@ -361,7 +361,7 @@ int main()
 				isInside(carrotX, carrotY, 12, 16, x + 12, y + 16))
 			{
 				score++;
-				// beepTimer = beepDuration;
+				beepTimer = beepDuration;
 				playNote(beepSound);
 				printNumber(score, 5, 5, RGBToWord(0xff, 0xff, 0), 0);
 				fillRectangle(carrotX, carrotY, 16, 16, 0); // Erase carrot
