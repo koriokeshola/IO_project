@@ -5,6 +5,7 @@
 #include <stdbool.h> // For boolean values
 #include <stdlib.h>   // For rand() and srand()
 #include <time.h> // For time
+#include "serial.h"
 
 // void playNote(uint32_t Freq);
 // void initSound(void);
@@ -23,7 +24,7 @@ void chest_box_show();
 void chest_box_clear();
 void refresh_chest_if_needed();
 void initialize_game();
-void game(uint32_t *player_score);
+void game(uint32_t *score);
 
 // Turn LEDs on and off
 void RedOn(void);
@@ -36,6 +37,8 @@ void GreenOff(void);
 void flashGreenLED(void);
 void flashRedLED(void);
 void flashYellowLED(void);
+
+int _write(int file, char *ptr, int len);
 
 // Global variables
 volatile uint32_t milliseconds;
@@ -90,36 +93,6 @@ const uint16_t chest_box[] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 const uint16_t play_button[] = { 12800,12800,13073,12800,45568,47211,48879,65535,65535,65535,65535,65535,65535,65535,65535,65535,12800,12800,48879,47211,45568,12800,13073,55948,24575,65535,65535,65535,65535,65535,65535,65535,12800,12800,65535,65535,7638,22082,12800,12800,46113,15541,65535,65535,65535,65535,65535,65535,12800,12800,65535,65535,65535,65535,15541,46113,12800,12800,22082,7638,65535,65535,65535,65535,12800,12800,65535,65535,65535,65535,65535,24575,64148,13073,12800,45568,47211,48879,65535,65535,12800,12800,65535,65535,65535,65535,65535,65535,65535,48879,47211,45568,12800,13073,55948,24575,12800,12800,65535,65535,65535,65535,65535,65535,65535,65535,65535,7638,30274,12800,12800,39300,12800,12800,65535,65535,65535,65535,65535,65535,65535,65535,65535,7638,22082,12800,12800,39300,12800,12800,65535,65535,65535,65535,65535,65535,65535,48879,47211,45568,12800,13073,64148,24575,12800,12800,65535,65535,65535,65535,65535,24575,55948,13073,12800,45568,47211,48879,65535,65535,12800,12800,65535,65535,65535,65535,15541,46113,12800,12800,30274,7638,65535,65535,65535,65535,12800,12800,65535,65535,7638,22082,12800,12800,46113,15541,65535,65535,65535,65535,65535,65535,12800,12800,48879,47211,37376,12800,13073,64148,24575,65535,65535,65535,65535,65535,65535,65535,12800,12800,13073,12800,45568,47211,48879,65535,65535,65535,65535,65535,65535,65535,65535,65535,12800,12800,12800,30274,7638,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535,23733,22082,23733,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535,65535
 };
 
-/*
-int hinverted = 0;
-int vinverted = 0;
-int toggle = 0;
-int righttoggle=0;
-int lefttoggle=0;
-int uptoggle=0;
-int downtoggle=0;
-int hmoved = 0;
-int vmoved = 0;
-uint16_t x = 70;
-uint16_t y = 50;
-
-
-uint16_t oldx = x;
-uint16_t oldy = y;
-
-uint16_t carrotX = 30, carrotY = 80; // Initial carrot position
-uint32_t lastSecond = 10; // Track the last displayed second
-int random_time_start = 0;
-int random_time_end = 0;
-// if round == 1, score1 = score, else score2 = score
-int player1_score = 0;
-int player2_score = 0;
-int round;
-*/
-
-
-
-
 
 
 int main()
@@ -129,7 +102,7 @@ int main()
 	int player2_score = 0;
 	int round;
 
-	
+	initSerial();
 	initClock();
 	initSysTick();
 	setupIO();
@@ -137,19 +110,19 @@ int main()
 	flashGreenLED();
 	initSound();
 
-	printText("Welcome to", 10, 20, RGBToWord(0, 204, 0), 0);    // Adjust position if needed
-	printText("Carrot Chase!", 10, 30, RGBToWord(255, 128, 0), 0);    // Adjust position if needed
-	printText("Eat Carrots and", 10, 60, RGBToWord(0, 102, 204), 0);    // Adjust position if needed
-	printText("Defeat the Wolves", 7, 70, RGBToWord(0, 102, 204), 0);    // Adjust position if needed
-	printText("Who will win -", 10, 80, RGBToWord(0, 102, 204), 0);    // Adjust position if needed
-	printText("Player 1 or 2?", 10, 90, RGBToWord(0, 102, 204), 0);    // Adjust position if needed
+	printText("Welcome to", 10, 20, RGBToWord(0, 204, 0), 0);
+	printText("Carrot Chase!", 10, 30, RGBToWord(255, 128, 0), 0);
+	printText("Eat Carrots and", 10, 60, RGBToWord(0, 102, 204), 0);
+	printText("Defeat the Wolves", 7, 70, RGBToWord(0, 102, 204), 0);
+	printText("Who will win -", 10, 80, RGBToWord(0, 102, 204), 0);
+	printText("Player 1 or 2?", 10, 90, RGBToWord(0, 102, 204), 0);
 	putImage(55, 110, 16, 16, play_button, 0, 0);
 	// putImage(chestX, chestY, 16, 16, chest_box, 0, 0); // Display the chest
 
 	delay(3000);
 	clear();
-	
-	
+
+
 	while(round)
 	{
 		for(round = 1; round <= 2; round++) // Multiplayer implementation
@@ -160,18 +133,18 @@ int main()
 				printText("Player 1 Start!", 15, 60, RGBToWord(0xff, 128, 255), 0);    // Adjust position if needed
 				flashYellowLED();
 				delay(2000);
-				clear();  
+				clear();
 				game(&player1_score);
 				//player1_score = score;
 				clear();
-			
+
 			}
 			else if(round == 2)
 			{
 				printText("Player 2 Start!", 15, 60, RGBToWord(0xff, 127, 255), 0);    // Adjust position if needed
 				flashYellowLED();
 				delay(2000);
-				clear();  
+				clear();
 				game(&player2_score);
 				//player2_score = score;
 				clear();
@@ -180,8 +153,8 @@ int main()
 
 
 		} //end for loop
-			
-			
+
+
 		// Display congratulatory message based on final scores
 		if(player1_score > player2_score)
 		{
@@ -201,8 +174,8 @@ int main()
 			printText("It's a Tie!", 30, 60, RGBToWord(0xff, 0, 0), 0);
 		}
 
-		delay(1000);
 		clear();
+		delay(1000);
 		printText("Play again?", 20, 80, RGBToWord(0xff, 0, 0), 0);
 		if ((GPIOB->IDR & (1 << 11))==0)
 		{
@@ -240,29 +213,29 @@ void initClock(void)
         // First ensure PLL is disabled
         RCC->CR &= ~(1u<<24);
         while( (RCC->CR & (1 <<25))); // wait for PLL ready to be cleared
-        
+
 // Warning here: if system clock is greater than 24MHz then wait-state(s) need to be
 // inserted into Flash memory interface
-				
+
         FLASH->ACR |= (1 << 0);
         FLASH->ACR &=~((1u << 2) | (1u<<1));
         // Turn on FLASH prefetch buffer
         FLASH->ACR |= (1 << 4);
         // set PLL multiplier to 12 (yielding 48MHz)
         RCC->CFGR &= ~((1u<<21) | (1u<<20) | (1u<<19) | (1u<<18));
-        RCC->CFGR |= ((1<<21) | (1<<19) ); 
+        RCC->CFGR |= ((1<<21) | (1<<19) );
 
         // Need to limit ADC clock to below 14MHz so will change ADC prescaler to 4
         RCC->CFGR |= (1<<14);
 
         // and turn the PLL back on again
-        RCC->CR |= (1<<24);        
-        // set PLL as system clock source 
+        RCC->CR |= (1<<24);
+        // set PLL as system clock source
         RCC->CFGR |= (1<<1);
 }
 
-//function used in order to get random numbers to use as seed for srand 
-void initTimer() 
+//function used in order to get random numbers to use as seed for srand
+void initTimer()
 {
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // Enable TIM2 clock
     TIM2->PSC = 47999;                   // Set prescaler to slow the timer
@@ -337,17 +310,17 @@ void chest_box_show()
 // function that clears the chest box from screen
 void chest_box_clear()
 {
-	fillRectangle(chestX, chestY, 16, 16, 0); // Clear the chest 
+	fillRectangle(chestX, chestY, 16, 16, 0); // Clear the chest
 	chest_visible = false; // Update visibility
 }
 
 
 
 // Function to refresh the chest if a wolf overlaps it
-void refresh_chest_if_needed() 
+void refresh_chest_if_needed()
 {
     // Only redraw if chest is visible and a wolf is at its position
-    if (chest_visible == true && 
+    if (chest_visible == true &&
 			(isInside(wolf1X, wolf1Y, 16, 16, chestX, chestY) || isInside(wolf1X, wolf1Y, 16, 16, chestX + 16, chestY) ||
 			isInside(wolf1X, wolf1Y, 16, 16, chestX, chestY + 16) || isInside(wolf1X, wolf1Y, 16, 16, chestX + 16, chestY + 16)
 
@@ -360,7 +333,7 @@ void refresh_chest_if_needed()
 
 
 // Game initialization function
-void initialize_game()
+void initialize_game(int *score)
 {
     srand(TIM2->CNT);  // Call srand only once at the start
 }
@@ -388,7 +361,6 @@ void game(uint32_t *player_score)
 	int random_time_start = 0;
 	int random_time_end = 0;
 	// if round == 1, score1 = score, else score2 = score
-	
 
 	chest_visible = false;
 	chest_touched = false;
@@ -398,13 +370,13 @@ void game(uint32_t *player_score)
 
 
 	*player_score = 0;
-	
+
 
 	while(game_mode)
 	{
 		// time at which chest will appear in game
-		if (gameTime <= 50000 && gameTime >= 40000 && chest_touched == false) 
-		{   
+		if (gameTime <= 50000 && gameTime >= 40000 && chest_touched == false)
+		{
 			if (chest_first_show == false)
 			{
 				initialize_game();
@@ -422,7 +394,7 @@ void game(uint32_t *player_score)
 				//turns on the chest_visible value
 				chest_box_show();
 
-				//random_time_start = TIM2->CNT; 
+				//random_time_start = TIM2->CNT;
 				//printNumber(random_time_start, 60, 80, RGBToWord(0xff, 0xff, 0), 0);
 			}
 			// Check if the rabbit touches the chest
@@ -434,7 +406,7 @@ void game(uint32_t *player_score)
 				chest_touched = true;
 				score += 5;
 				playNote(C7);
-				delay(200);
+				delay(50);
 				playNote(0);
 				printNumber(score, 5, 5, RGBToWord(0xff, 0xff, 0), 0);
 				chest_box_clear();  // Clear chest if touched
@@ -443,27 +415,27 @@ void game(uint32_t *player_score)
 			{
 				// Refresh chest if wolves overlap it
 				refresh_chest_if_needed();
-			}	
+			}
 		}
 		// clear chest from screen when cetain time passes
-		else if (gameTime < 40000) 
+		else if (gameTime < 40000)
 		{
-			// Clear chest 
+			// Clear chest
 			chest_box_clear();
 		}
 
-			
-	
+
+
 		// Wolf animation toggle logic
 		// Clear the previous wolf positions (increase the clearing area slightly to avoid residue)
 		fillRectangle(wolf1X - 1, wolf1Y - 1, 18, 18, 0); // Clear a slightly larger area
 		fillRectangle(wolf2X - 1, wolf2Y - 1, 18, 18, 0); // Clear a slightly larger area
 
-		if (wolf_toggle) 
+		if (wolf_toggle)
 		{
 			putImage(wolf1X, wolf1Y, 16, 16, wolfopen, 0, 0);
 			putImage(wolf2X, wolf2Y, 16, 16, wolfopen, 0, 0);
-		} else 
+		} else
 		{
 			putImage(wolf1X, wolf1Y, 16, 16, wolfclosed, 0, 0);
 			putImage(wolf2X, wolf2Y, 16, 16, wolfclosed, 0, 0);
@@ -482,7 +454,7 @@ void game(uint32_t *player_score)
 		if (wolf2X <= 0 || wolf2X >= 110) wolf2_dirX *= -1;
 		if (wolf2Y <= 0 || wolf2Y >= 140) wolf2_dirY *= -1;
 
-		
+
 		// Collision detection with wolves
 		if (isInside(wolf1X, wolf1Y, 12, 16, x, y) || isInside(wolf1X, wolf1Y, 12, 16, x + 12, y) ||
 			isInside(wolf1X, wolf1Y, 12, 16, x, y + 16) || isInside(wolf1X, wolf1Y, 12, 16, x + 12, y + 16)
@@ -490,7 +462,7 @@ void game(uint32_t *player_score)
 			|| isInside(wolf2X, wolf2Y, 12, 16, x, y) || isInside(wolf2X, wolf2Y, 12, 16, x + 12, y) ||
 			isInside(wolf2X, wolf2Y, 12, 16, x, y + 16) || isInside(wolf2X, wolf2Y, 12, 16, x + 12, y + 16))
 		{
-					
+
 			clear();  // Clear the screen to show the deadbunny image clearly
 
 			// Position the deadbunny image in the center
@@ -523,7 +495,7 @@ void game(uint32_t *player_score)
 			printNumberX2(score, 60, 100, RGBToWord(0xff, 0xff, 0), 0);
 			delay(5000); // Delay to show final score
 			//break; // End game loop
-			game_mode = false; 
+			game_mode = false;
 		}
 
 		// Display the timer in seconds on the screen
@@ -544,7 +516,7 @@ void game(uint32_t *player_score)
 		hinverted = vinverted = 0;
 
 		if ((GPIOB->IDR & (1 << 4))==0) // right pressed
-		{					
+		{
 			if (x < 110)
 			{
 				//erasing the old bunny by filling the area with the background color (0=black)
@@ -562,20 +534,20 @@ void game(uint32_t *player_score)
 				putImage(x,y,16,16,rightbunny1,0,0);
 
 				//flip the toggle value
-				
+
 				}
 				righttoggle = righttoggle ^ 1;
 				//update the oldx and oldy variables to the new position for next movement
 				oldx= x;
 				oldy =y;
-				
-			}	
 
-							
+			}
+
+
 		}
 		if ((GPIOB->IDR & (1 << 5))==0) // left pressed
-		{			
-			
+		{
+
 			if (x > 10)
 			{
 				//erasing the old bunny by filling the area with the background color (0=black)
@@ -597,15 +569,15 @@ void game(uint32_t *player_score)
 				//update the oldx and oldy variables to the new position for next movement
 				oldx= x;
 				oldy =y;
-			
-			}			
+
+			}
 		}
 		if ( (GPIOA->IDR & (1 << 11)) == 0) // down pressed
 		{
 			if (y < 140) //move down boundary
 			{
 				fillRectangle(oldx,oldy,16,16,0); //clear the old position
-				y = y + 1;			
+				y = y + 1;
 				vmoved = 1;
 				vinverted = 0;
 
@@ -626,7 +598,7 @@ void game(uint32_t *player_score)
 
 		}
 		if ( (GPIOA->IDR & (1 << 8)) == 0) // up pressed
-		{			
+		{
 			if (y > 16)
 			{
 				fillRectangle(oldx,oldy,16,16,0); // clear the old position
@@ -644,9 +616,9 @@ void game(uint32_t *player_score)
 				}
 
 				// update the oldx and oldy variables to the new position for next movement
-				oldx= x;
-				oldy =y;
-		
+				oldx = x;
+				oldy = y;
+
 			}
 
 		}
@@ -655,28 +627,28 @@ void game(uint32_t *player_score)
 			// only redraw if there has been some movement (reduces flicker)
 			fillRectangle(oldx,oldy,16,16,0);
 			// oldx = x;
-			// oldy = y;					
-			if (hmoved && hinverted ==1) //moving right
+			// oldy = y;
+			if (hmoved && hinverted ==1) // moving right
 			{
 				if (lefttoggle)
 					putImage(x,y,16,16,leftbunny1,hinverted,0);
 				else
 					putImage(x,y,16,16,leftbunny2,hinverted,0);
-				
+
 				toggle = toggle ^ 1;
 				//lefttoggle ^= 1;
 			}
-			else if(hmoved && hinverted  ==0)// moving left
+			else if(hmoved && hinverted  ==0) // moving left
 			{
-			
+
 				if (righttoggle)
 					putImage(x, y, 16, 16, rightbunny2, 1, 0);
 				else
 					putImage(x, y, 16, 16, rightbunny1, 1, 0);
-				
+
 				toggle = toggle ^ 1; // toggle between rightbunny1 and rightbunny2
-				
-		
+
+
 			}
 
 			else if (vmoved && vinverted == 0) // Moving down
@@ -702,7 +674,7 @@ void game(uint32_t *player_score)
 
 
 		//if (vmoved || hmoved)
-		
+
 			if (isInside(carrotX, carrotY, 12, 16, x, y) ||
 				isInside(carrotX, carrotY, 12, 16, x + 12, y) ||
 				isInside(carrotX, carrotY, 12, 16, x, y + 16) ||
@@ -721,10 +693,10 @@ void game(uint32_t *player_score)
 			fillRectangle(carrotX, carrotY, 12, 16, 0); // Clear old carrot
 			putImage(carrotX, carrotY, 16, 16, carrot, 0, 0); // Draw new carrot
 
-		}	
+		}
 		//use delay to slow down characters
 		delay(40);
-		
+
 	}//end while loop
 }
 
@@ -789,4 +761,13 @@ void flashYellowLED(void)
 		YellowOff();
 		delay(10);
 	}
+}
+
+int _write(int file, char *ptr, int len)
+{
+    int i;
+    for(i = 0; i < len; i++) {
+        eputchar(*ptr++);
+    }
+    return len;
 }
