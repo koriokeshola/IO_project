@@ -1,6 +1,6 @@
-/* Program Description: This game is called Carrot Chase.
+/* Program Description: This is a 2-player game is called Carrot Chase.
 It features a bunny that collects carrots and chests while avoiding 2 wolves.
-There are 2 rounds so players can compete to win!
+Compete to win!
 Authors: Bouthayna Metarfi, Kori Okeshola and Seema Alazhari */
 
 #include <stm32f031x6.h>
@@ -97,9 +97,9 @@ int main()
 {
 	int player1_score = 0;
 	int player2_score = 0;
-	int round;
 	int high_score = 0;
 	int current_high_score;
+	int round;
 
 	// Initialise game subsytems:
 	initSerial();  // Serial communication
@@ -197,6 +197,7 @@ int main()
 
 		} // End for loop
 
+		// Calculate highest score and store for future rounds
 		if(player1_score > high_score)
 		{
 			high_score = player1_score;
@@ -214,7 +215,8 @@ int main()
 
 		current_high_score = high_score;
 		printText("High Score:", 20, 110, RGBToWord(0, 50, 255), 0);
-		printNumber(current_high_score, 90, 100, RGBToWord(0, 50, 255), 0);
+		printNumber(current_high_score, 90, 120, RGBToWord(0, 50, 255), 0);
+		delay(5000);
 
 		
 		// Delay ie. pause until up button is pressed
