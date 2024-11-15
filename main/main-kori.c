@@ -134,19 +134,19 @@ int main()
 					// Erase the old bunny position
 					fillRectangle(oldx, y, 16, 16, 0);
 
-					// Update bunny's x-position to m
+					// Update bunny's x-position
 					x += direction;
 
-					// If bunny hits the screen edge, reverse direction
-					if (x >= 110 || x <= 10)
+					// If bunny hits edge of screen, reverse direction
+					if(x >= 110 || x <= 10)
 					{
 						direction = -direction;
 					}
 
-					// Draw the bunny based on the current frame
-					if (direction == 1) // Moving right
+					// Draw by printing bunny as it moves in the direction
+					if(direction == 1) // Moving right
 					{
-						if (righttoggle)
+						if(righttoggle)
 							putImage(x, y, 16, 16, leftbunny1, 0, 0);
 						else
 							putImage(x, y, 16, 16, leftbunny2, 0, 0);
@@ -375,7 +375,7 @@ void refresh_chest_if_needed()
 }
 
 
-// Game initialization function
+// Game initialisation function
 void initialise_game()
 {
     srand(TIM2->CNT);  // Call srand only once at the start
@@ -827,7 +827,6 @@ determineWinner(int player1_score, int player2_score)
 
 		playNote(0);
 
-		
 		delay(3000);
 		clear();
 	}
@@ -856,8 +855,8 @@ determineWinner(int player1_score, int player2_score)
 	else if(player1_score == player2_score)
 	{
 		printText("It's a Tie!", 27, 75, RGBToWord(255, 255, 255), 0);
+		
 		flashGreenLED();
-
 		playNote(G4);
 		delay(200);
 
